@@ -1,5 +1,0 @@
-schema: spec-driven
-created: 2026-08-04
-goal: Ship a publishable create-frontstack npm package that scaffolds a modern
-  React+TS+Vite frontend repo with Docker, TanStack Router/Query, Zustand,
-  shadcn, agent skills and MCP

@@ -5,7 +5,7 @@ import globals from 'globals';
 // ships its own eslint.config.js and is excluded here.
 export default [
   {
-    ignores: ['template/**', 'openspec/**', 'node_modules/**'],
+    ignores: ['template/**', 'node_modules/**'],
   },
   js.configs.recommended,
   {

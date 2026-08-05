@@ -257,7 +257,7 @@ async function generate(parsed) {
   await assertEmptyTarget(target);
   await fs.mkdir(target, { recursive: true });
 
-  // Copy everything except skills/ — skills are only copied when enabled (SPEC §7.4).
+  // Copy everything except skills/ — skills are only copied when enabled.
   await copyDir(TEMPLATE_DIR, target, projectName, new Set(['skills']));
 
   const warnings = [];
