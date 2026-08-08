@@ -162,12 +162,13 @@ describe('assertEmptyTarget', () => {
   });
 
   it('rethrows unexpected fs errors', async () => {
-    const dir = path.join(tmpRoot, 'err');
-    const spy = vi
-      .spyOn(fs, 'readdir')
-      .mockRejectedValue(Object.assign(new Error('EACCES'), { code: 'EACCES' }));
-    await expect(assertEmptyTarget(dir)).rejects.toThrow('EACCES');
-    spy.mockRestore();
+    const denied = Object.assign(new Error('permission denied'), { code: 'EACCES' });
+    vi.spyOn(fs, 'readdir').mockRejectedValue(denied);
+    try {
+      await expect(assertEmptyTarget(path.join(tmpRoot, 'denied'))).rejects.toBe(denied);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 });
 
