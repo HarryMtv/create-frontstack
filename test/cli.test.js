@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   parseArgs,
@@ -159,6 +159,15 @@ describe('assertEmptyTarget', () => {
     await fs.mkdir(dir);
     await fs.writeFile(path.join(dir, 'x'), 'x');
     await expect(assertEmptyTarget(dir)).rejects.toThrow(/not empty/);
+  });
+
+  it('rethrows unexpected fs errors', async () => {
+    const dir = path.join(tmpRoot, 'err');
+    const spy = vi
+      .spyOn(fs, 'readdir')
+      .mockRejectedValue(Object.assign(new Error('EACCES'), { code: 'EACCES' }));
+    await expect(assertEmptyTarget(dir)).rejects.toThrow('EACCES');
+    spy.mockRestore();
   });
 });
 
