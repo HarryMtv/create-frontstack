@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fetchExamplePost, exampleKeys, examplePostQuery } from './api';
 
+const POST_URL = 'https://jsonplaceholder.typicode.com/posts/1';
+
 describe('example/api', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn());
@@ -11,48 +13,38 @@ describe('example/api', () => {
   });
 
   describe('fetchExamplePost', () => {
-    it('should fetch the example post successfully', async () => {
-      const mockPost = { id: 1, title: 'Test Post' };
-      const mockResponse = {
+    it('returns the parsed post on a successful response', async () => {
+      const post = { id: 1, title: 'Test Post' };
+      vi.mocked(fetch).mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockPost),
-      } as Response;
+        json: () => Promise.resolve(post),
+      } as Response);
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockResponse);
-
-      const result = await fetchExamplePost();
-
-      expect(result).toEqual(mockPost);
-      expect(fetch).toHaveBeenCalledWith('https://jsonplaceholder.typicode.com/posts/1');
+      await expect(fetchExamplePost()).resolves.toEqual(post);
+      expect(fetch).toHaveBeenCalledWith(POST_URL);
     });
 
-    it('should throw an error if the request fails', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 404,
-      } as Response;
-
-      vi.mocked(fetch).mockResolvedValueOnce(mockResponse);
+    it('throws with the status code when the response is not ok', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 404 } as Response);
 
       await expect(fetchExamplePost()).rejects.toThrow('Request failed: 404');
-      expect(fetch).toHaveBeenCalledWith('https://jsonplaceholder.typicode.com/posts/1');
+      expect(fetch).toHaveBeenCalledWith(POST_URL);
     });
   });
 
   describe('exampleKeys', () => {
-    it('should define the base key', () => {
-      expect(exampleKeys.all).toEqual(['example']);
-    });
-
-    it('should define the post key correctly', () => {
-      expect(exampleKeys.post()).toEqual(['example', 'post']);
+    // The prefix relationship is what makes invalidating `all` reach every
+    // derived key, so that — not the literal strings — is what is pinned here.
+    it('derives the post key from the base key', () => {
+      expect(exampleKeys.post().slice(0, exampleKeys.all.length)).toEqual([...exampleKeys.all]);
     });
   });
 
   describe('examplePostQuery', () => {
-    it('should return the correct query options', () => {
+    it('wires the post key and fetcher into query options', () => {
       const options = examplePostQuery();
-      expect(options.queryKey).toEqual(['example', 'post']);
+
+      expect(options.queryKey).toEqual(exampleKeys.post());
       expect(options.queryFn).toBe(fetchExamplePost);
     });
   });
