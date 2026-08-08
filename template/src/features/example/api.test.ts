@@ -15,7 +15,7 @@ describe('example/api', () => {
       const mockPost = { id: 1, title: 'Test Post' };
       const mockResponse = {
         ok: true,
-        json: async () => mockPost,
+        json: () => Promise.resolve(mockPost),
       } as Response;
 
       vi.mocked(fetch).mockResolvedValueOnce(mockResponse);
