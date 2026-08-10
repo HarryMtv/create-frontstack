@@ -28,6 +28,7 @@ export const CLIENT_DIRS = {
   agents: '.agents',
 };
 const VALID_CLIENTS = Object.keys(CLIENT_DIRS);
+const VALID_CLIENTS_SET = new Set(VALID_CLIENTS);
 
 // --- pure helpers (exported for unit tests) ---------------------------------
 
@@ -70,7 +71,7 @@ export function resolveSkills(parsed) {
       .split(',')
       .map((c) => c.trim())
       .filter(Boolean);
-    const invalid = clients.filter((c) => !VALID_CLIENTS.includes(c));
+    const invalid = clients.filter((c) => !VALID_CLIENTS_SET.has(c));
     if (invalid.length) {
       throw new Error(
         `Unknown skill client(s): ${invalid.join(', ')}. Valid: ${VALID_CLIENTS.join(', ')}.`,
