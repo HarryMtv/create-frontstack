@@ -66,7 +66,7 @@ Settled during a validation spike. The planning tree that recorded them has been
 
 Non-goals, deliberately: no backend/database/auth in the template, no monorepo, no per-MCP-server selection, no router/state alternatives, no auto-bumping of pins.
 
-Version pins are deliberate: exact versions, no `^` ranges except `@types/node`. Notably **TypeScript is pinned to 6.0.3, not 7** — `typescript-eslint@8` exits non-zero under TS 7, which would mean no linting at all, not merely degraded linting. Bumping pins means re-running the generation gate.
+Version pins are deliberate: exact versions, no `^` ranges except `@types/node`. Notably **TypeScript is pinned to 6.0.3, not 7** — `typescript-eslint@8` exits non-zero under TS 7, which would mean no linting at all, not merely degraded linting. **React and react-dom are pinned to 19.2.7, not the latest 19.2.8** — react@19.2.8 changed `createRoot().render()` so the initial commit is no longer flushed synchronously, and under Vitest 4 + `@testing-library/react` every component test renders an empty container (no error, just missing elements); `template/src/test/render.test.tsx` is the regression guard. Revert to 19.2.7 only when a testing-library release flushes 19.2.x. Bumping pins means re-running the generation gate.
 
 ## How the CLI works (`bin/index.js`)
 
