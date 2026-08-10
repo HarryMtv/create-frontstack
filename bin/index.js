@@ -149,6 +149,23 @@ export async function linkSkills(targetDir, client) {
   }
 }
 
+// AGENTS.md mirrors CLAUDE.md via a relative symlink, so every agent client
+// (Claude Code, Cursor, …) reads the same instructions. Materialized after the
+// copy — never stored as a symlink in the template, since npm publish and
+// cross-platform git mangle or drop them (same reason as skills above).
+export async function linkAgents(targetDir) {
+  const linkPath = path.join(targetDir, 'AGENTS.md');
+  try {
+    await fs.symlink('CLAUDE.md', linkPath, 'file');
+    return { method: 'symlink' };
+  } catch {
+    // Windows / insufficient privileges: junctions are directory-only, so fall
+    // back to a plain copy of the file.
+    await fs.copyFile(path.join(targetDir, 'CLAUDE.md'), linkPath);
+    return { method: 'copy' };
+  }
+}
+
 // --- next-steps text --------------------------------------------------------
 
 const INSTALL_COMMAND = { pnpm: 'pnpm install', npm: 'npm install', yarn: 'yarn', bun: 'bun install' };
@@ -261,6 +278,13 @@ async function generate(parsed) {
   await copyDir(TEMPLATE_DIR, target, projectName, new Set(['skills']));
 
   const warnings = [];
+
+  // AGENTS.md mirrors CLAUDE.md for cross-tool agent discovery (always present).
+  const agentsResult = await linkAgents(target);
+  if (agentsResult.method === 'copy') {
+    warnings.push('Could not create the AGENTS.md symlink; copied the file instead.');
+  }
+
   if (skills.enabled) {
     await copyDir(path.join(TEMPLATE_DIR, 'skills'), path.join(target, 'skills'), projectName);
     for (const client of skills.clients) {

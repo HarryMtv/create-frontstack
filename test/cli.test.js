@@ -13,6 +13,7 @@ const {
   copyDir,
   assertEmptyTarget,
   linkSkills,
+  linkAgents,
   nextSteps,
   DOTFILE_MAP,
 } = await import('../bin/index.js');
@@ -190,6 +191,24 @@ describe('linkSkills', () => {
   });
 });
 
+describe('linkAgents', () => {
+  it('makes AGENTS.md read the same as CLAUDE.md (symlink or fallback)', async () => {
+    const target = path.join(tmpRoot, 'proj');
+    await fs.mkdir(target, { recursive: true });
+    await fs.copyFile(path.join(TEMPLATE, 'CLAUDE.md'), path.join(target, 'CLAUDE.md'));
+
+    const result = await linkAgents(target);
+    expect(['symlink', 'copy']).toContain(result.method);
+
+    // Either way, AGENTS.md reads as the same content as CLAUDE.md.
+    const [agents, claude] = await Promise.all([
+      fs.readFile(path.join(target, 'AGENTS.md'), 'utf8'),
+      fs.readFile(path.join(target, 'CLAUDE.md'), 'utf8'),
+    ]);
+    expect(agents).toEqual(claude);
+  });
+});
+
 // --- end-to-end via the CLI process -----------------------------------------
 
 describe('CLI process', () => {
@@ -216,6 +235,11 @@ describe('CLI process', () => {
     // No skills copied and no .claude created.
     await expect(fs.stat(path.join(target, 'skills'))).rejects.toMatchObject({ code: 'ENOENT' });
     await expect(fs.stat(path.join(target, '.claude'))).rejects.toMatchObject({ code: 'ENOENT' });
+
+    // AGENTS.md mirrors CLAUDE.md (symlink or copy) for cross-tool discovery.
+    const agents = await fs.readFile(path.join(target, 'AGENTS.md'), 'utf8');
+    const claude = await fs.readFile(path.join(target, 'CLAUDE.md'), 'utf8');
+    expect(agents).toEqual(claude);
   });
 
   it('scaffolds with --skills=claude and links skills', async () => {
