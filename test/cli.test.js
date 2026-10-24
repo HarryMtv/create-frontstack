@@ -265,6 +265,21 @@ describe('CLI process', () => {
 
     await expectNoPlaceholder(target);
   });
+
+  it('runs when invoked through a bin symlink, as npx does', async () => {
+    const link = path.join(tmpRoot, 'create-frontstack');
+    await fs.symlink(BIN, link);
+
+    const out = execFileSync(process.execPath, [link, 'linked-app', '--no-skills'], {
+      cwd: tmpRoot,
+      encoding: 'utf8',
+    });
+
+    expect(out).toContain('Created linked-app');
+    await expect(
+      fs.access(path.join(tmpRoot, 'linked-app', 'package.json')),
+    ).resolves.toBeUndefined();
+  });
 });
 
 // --- helpers ----------------------------------------------------------------
