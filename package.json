@@ -1,6 +1,6 @@
 {
   "name": "create-frontstack",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Scaffold a modern React + TypeScript + Vite frontend repo with Docker, TanStack Router/Query, Zustand, shadcn/ui, agent skills and MCP.",
   "license": "MIT",
   "author": "Igor Martynov",
