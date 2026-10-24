@@ -168,7 +168,12 @@ export async function linkAgents(targetDir) {
 
 // --- next-steps text --------------------------------------------------------
 
-const INSTALL_COMMAND = { pnpm: 'pnpm install', npm: 'npm install', yarn: 'yarn', bun: 'bun install' };
+const INSTALL_COMMAND = {
+  pnpm: 'pnpm install',
+  npm: 'npm install',
+  yarn: 'yarn',
+  bun: 'bun install',
+};
 const RUN_COMMAND = {
   pnpm: (s) => `pnpm ${s}`,
   npm: (s) => `npm run ${s}`,

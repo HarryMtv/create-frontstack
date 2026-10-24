@@ -26,15 +26,16 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm format:check
       - run: pnpm test
 
   # Design D5: prove the GENERATED project is green by scaffolding it from this
-  # very CLI and running its full quality gate (install → check → build).
+  # very CLI and running its full quality gate (install → check → format:check → build).
   generation-gate:
     name: Generated project gate
     runs-on: ubuntu-latest
     env:
-      RUN_GENERATION_GATE: "1"
+      RUN_GENERATION_GATE: '1'
     steps:
       - uses: actions/checkout@v4
 

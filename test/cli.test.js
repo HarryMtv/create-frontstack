@@ -71,7 +71,10 @@ describe('normalizeProjectName', () => {
 
 describe('resolveSkills', () => {
   it('disables on --no-skills', () => {
-    expect(resolveSkills({ noSkills: true, skills: null })).toEqual({ enabled: false, clients: [] });
+    expect(resolveSkills({ noSkills: true, skills: null })).toEqual({
+      enabled: false,
+      clients: [],
+    });
   });
 
   it('parses a client list', () => {
@@ -89,7 +92,9 @@ describe('resolveSkills', () => {
   });
 
   it('rejects unknown clients', () => {
-    expect(() => resolveSkills({ noSkills: false, skills: 'cursor' })).toThrow(/Unknown skill client/);
+    expect(() => resolveSkills({ noSkills: false, skills: 'cursor' })).toThrow(
+      /Unknown skill client/,
+    );
   });
 });
 
