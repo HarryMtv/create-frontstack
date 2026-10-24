@@ -28,4 +28,4 @@ nginx serves `dist/`, sends deep links to `index.html` (SPA fallback), and cache
 
 - `pnpm-lock.yaml` must be committed (production build uses `pnpm install --frozen-lockfile`).
 - E2E (Playwright) and its browsers are **not** in the production image — run those locally or in CI.
-- If corepack is unavailable on the Node image, fall back to `RUN npm i -g pnpm@11.18.0`.
+- If corepack is unavailable on the Node image, fall back to `RUN npm i -g pnpm@12.15.0`.
