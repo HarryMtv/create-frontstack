@@ -15,11 +15,15 @@ describe('utils', () => {
     it('handles conditional classes', () => {
       const conditionTrue = true;
       const conditionFalse = false;
-      expect(cn('class1', conditionTrue && 'class2', conditionFalse && 'class3')).toBe('class1 class2');
+      expect(cn('class1', conditionTrue && 'class2', conditionFalse && 'class3')).toBe(
+        'class1 class2',
+      );
     });
 
     it('handles arrays and objects', () => {
-      expect(cn(['class1', 'class2'], { class3: true, class4: false })).toBe('class1 class2 class3');
+      expect(cn(['class1', 'class2'], { class3: true, class4: false })).toBe(
+        'class1 class2 class3',
+      );
     });
 
     it('handles undefined, null, and empty string', () => {
