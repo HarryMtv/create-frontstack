@@ -3,7 +3,7 @@
 // Copies template/ into a new project, restores npm-mangled dotfiles, substitutes
 // {{PROJECT_NAME}}, and wires agent skills via symlinks (with a Windows fallback).
 
-import { promises as fs } from 'node:fs';
+import { promises as fs, realpathSync } from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
@@ -321,9 +321,10 @@ async function main() {
   await generate(parsed);
 }
 
-// Run only when executed directly, not when imported by tests.
+// Run only when executed directly, not when imported by tests. npx and global
+// installs invoke a bin symlink, so argv[1] must be resolved to the real file.
 const isMainModule =
-  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isMainModule) {
   main().catch((err) => {
