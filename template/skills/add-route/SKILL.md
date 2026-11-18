@@ -41,7 +41,7 @@ Routing is **file-based**: the filename becomes the URL. `routeTree.gen.ts` is g
    Then the `useUsers()` hook reads from cache with no waterfall.
 4. Generate + typecheck:
    ```sh
-   pnpm typecheck      # runs `tsr generate` before tsc
+   bun run typecheck      # runs `tsr generate` before type checking
    ```
 
 ## Conventions

@@ -1,6 +1,6 @@
 ---
 name: add-dependency
-description: Add a dependency with an exact pin via pnpm, following the project's no-caret policy for runtime/dev packages.
+description: Add a dependency with an exact pin via Bun, following the project's no-caret policy for runtime/dev packages.
 ---
 
 # Add a dependency
@@ -11,15 +11,15 @@ This project pins **exact** versions (no `^`) for reproducibility. Only `@types/
 
 1. Install with an exact version:
    ```sh
-   pnpm add <pkg>@<version>          # dependency
-   pnpm add -D <pkg>@<version>       # devDependency
+   bun add <pkg>@<version>          # dependency
+   bun add -d <pkg>@<version>       # devDependency
    ```
-   If you don't pin a version, pnpm writes a caret — fix it in `package.json` afterward so the value is exact.
+   If you don't pin a version, Bun writes a caret — fix it in `package.json` afterward so the value is exact.
 2. (Optional) use the **context7** MCP to confirm current docs/API for the package before integrating.
-3. Commit the updated `package.json` **and** `pnpm-lock.yaml` together.
+3. Commit the updated `package.json` **and** `bun.lock` together.
 4. Run the gate:
    ```sh
-   pnpm check && pnpm build
+   bun run check && bun run build
    ```
 
 ## Conventions

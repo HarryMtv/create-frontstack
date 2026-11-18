@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const {
   parseArgs,
@@ -112,12 +112,15 @@ describe('substituteName', () => {
 });
 
 describe('nextSteps', () => {
-  it('mentions playwright install and the pm commands', () => {
-    const steps = nextSteps('my-app', 'pnpm').join('\n');
+  it('prints the Bun-only commands', () => {
+    const steps = nextSteps('my-app').join('\n');
     expect(steps).toContain('cd my-app');
-    expect(steps).toContain('pnpm install');
-    expect(steps).toContain('npx playwright install');
-    expect(steps).toContain('pnpm dev');
+    expect(steps).toContain('bun install');
+    expect(steps).toContain('bunx playwright install');
+    expect(steps).toContain('bun run dev');
+    expect(steps).toContain('bun run check');
+    expect(steps).toContain('bun run build');
+    expect(steps).not.toMatch(/pnpm|npm run|yarn/);
   });
 });
 
@@ -225,7 +228,20 @@ describe('CLI process', () => {
     const target = path.join(tmpRoot, 'demo-app');
 
     expect(out).toContain('Created demo-app');
-    expect(out).toContain('npx playwright install');
+    expect(out).toContain('bunx playwright install');
+
+    // Vite+ / Bun project surface: one config, no legacy tool configs or lockfile.
+    await expect(fs.access(path.join(target, 'vite.config.ts'))).resolves.toBeUndefined();
+    for (const stale of [
+      'eslint.config.js',
+      'prettier.config.js',
+      '.prettierignore',
+      'pnpm-workspace.yaml',
+    ]) {
+      await expect(fs.access(path.join(target, stale))).rejects.toMatchObject({ code: 'ENOENT' });
+    }
+    const pkg = JSON.parse(await fs.readFile(path.join(target, 'package.json'), 'utf8'));
+    expect(pkg.packageManager).toMatch(/^bun@/);
 
     // Dotfiles renamed.
     await expect(fs.access(path.join(target, '.gitignore'))).resolves.toBeUndefined();

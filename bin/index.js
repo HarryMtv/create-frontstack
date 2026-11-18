@@ -168,30 +168,17 @@ export async function linkAgents(targetDir) {
 
 // --- next-steps text --------------------------------------------------------
 
-const INSTALL_COMMAND = {
-  pnpm: 'pnpm install',
-  npm: 'npm install',
-  yarn: 'yarn',
-  bun: 'bun install',
-};
-const RUN_COMMAND = {
-  pnpm: (s) => `pnpm ${s}`,
-  npm: (s) => `npm run ${s}`,
-  yarn: (s) => `yarn ${s}`,
-  bun: (s) => `bun run ${s}`,
-};
-
-export function nextSteps(projectName, pm) {
-  const install = INSTALL_COMMAND[pm] ?? INSTALL_COMMAND.pnpm;
-  const run = RUN_COMMAND[pm] ?? RUN_COMMAND.pnpm;
+// The generated project is Bun-only: Docker, CI and the shipped skills all use
+// Bun, so printing another package manager's commands would be misleading.
+export function nextSteps(projectName) {
   return [
     `cd ${projectName}`,
-    install,
-    'npx playwright install   # E2E + playwright/chrome-devtools MCP (optional)',
-    `${run('dev')}`,
+    'bun install',
+    'bunx playwright install   # E2E + playwright/chrome-devtools MCP (optional)',
+    'bun run dev',
     '',
-    `${run('check')}          # typecheck + lint + test`,
-    `${run('build')}          # production build`,
+    'bun run check          # format + lint + typecheck + test',
+    'bun run build          # production build',
   ];
 }
 
@@ -217,8 +204,6 @@ async function gatherInteractive(parsed) {
       ? normalizeProjectName(parsed.projectName)
       : normalizeProjectName(await prompt(rl, 'Project name?'));
 
-    const pm = await prompt(rl, 'Package manager', 'pnpm');
-
     let skills;
     if (parsed.noSkills) {
       skills = { enabled: false, clients: [] };
@@ -233,7 +218,7 @@ async function gatherInteractive(parsed) {
         skills = resolveSkills({ skills: raw, noSkills: false });
       }
     }
-    return { projectName, pm: pm || 'pnpm', skills };
+    return { projectName, skills };
   } finally {
     rl.close();
   }
@@ -247,7 +232,6 @@ function gatherNonInteractive(parsed) {
   }
   return {
     projectName: normalizeProjectName(parsed.projectName),
-    pm: 'pnpm',
     skills: resolveSkills(parsed),
   };
 }
@@ -271,7 +255,7 @@ function printHelp() {
 // --- entry point ------------------------------------------------------------
 
 async function generate(parsed) {
-  const { projectName, pm, skills } = process.stdin.isTTY
+  const { projectName, skills } = process.stdin.isTTY
     ? await gatherInteractive(parsed)
     : gatherNonInteractive(parsed);
 
@@ -313,7 +297,7 @@ async function generate(parsed) {
   for (const w of warnings) output.write(`! ${w}\n`);
 
   output.write('\nNext steps:\n');
-  for (const step of nextSteps(projectName, pm)) output.write(`  ${step}\n`);
+  for (const step of nextSteps(projectName)) output.write(`  ${step}\n`);
   output.write('\n');
 }
 

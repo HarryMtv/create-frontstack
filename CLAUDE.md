@@ -12,38 +12,42 @@ This is the single most important thing to understand before editing anything.
 
 The repo contains **two separate codebases with two separate toolchains**:
 
-|          | Packager                                                        | Template                                                   |
-| -------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
-| Code     | `bin/index.js`, `test/**`                                       | `template/**`                                              |
-| Runtime  | Node built-ins only, **zero runtime deps**                      | React 19 / TS 6 / Vite 8                                   |
-| ESLint   | `eslint.config.js` (ignores `template/**`)                      | `template/eslint.config.js`                                |
-| Prettier | `prettier.config.js` + `.prettierignore` (ignores `template/`)  | `template/prettier.config.js` + `template/.prettierignore` |
-| Vitest   | `vitest.config.js` (`include: test/**`, `exclude: template/**`) | `template/vite.config.ts` (`include: src/**`)              |
+|                 | Packager                                                      | Template                                                      |
+| --------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Code            | `bin/index.js`, `test/**`                                     | `template/**`                                                 |
+| Runtime         | Node built-ins only, **zero runtime deps**                    | React 19 / TypeScript / Vite 8                                |
+| Toolchain       | `vite.config.js` (`test`, `lint`, `fmt` blocks)               | `template/vite.config.ts` (`test`, `lint`, `fmt` blocks)      |
+| Lint            | Oxlint via `vp lint`, configured in `vite.config.js`          | Oxlint via `vp lint`, configured in `template/vite.config.ts` |
+| Format          | Oxfmt via `vp fmt`, configured in `vite.config.js`            | Oxfmt via `vp fmt`, configured in `template/vite.config.ts`   |
+| Tests           | `vite.config.js` (`include: test/**`, `exclude: template/**`) | `template/vite.config.ts` (`include: src/**`)                 |
+| Package manager | Bun (`bun@1.3.14`)                                            | Bun (`bun@1.3.14`)                                            |
 
-They are mutually excluded on purpose. **Root `pnpm lint` / `pnpm format` / `pnpm test` never touch `template/`.** Nothing under `template/` is linted, formatted, typechecked, or tested by any root command — see "Working on the template" for how to do that.
+They are mutually excluded on purpose. **Root `bun run lint` / `bun run format` / `bun run test` never touch `template/`.** Root lint/format ignore `template/**` and `skills/**`; root tests exclude `template/**`. Nothing under `template/` is linted, formatted, typechecked, or tested by any root command — see "Working on the template" for how to do that.
 
 ## Commands
 
 ```sh
-pnpm install
-pnpm test                  # packager unit tests (vitest run)
-pnpm test:watch
-pnpm lint                  # eslint (bin/ + test/ only)
-pnpm check                 # lint + test
-pnpm format                # prettier — root files only, NOT template/
+bun install
+bun run test               # packager unit tests (vp test run)
+bun run test:watch
+bun run lint               # Oxlint via vp (bin/ + test/ only)
+bun run check              # format + lint + test
+bun run format             # Oxfmt — root files only, NOT template/
 ```
+
+Note `bun run check` at the repo root is `vp check && vp test run`, so it **includes** formatting. In a generated project `bun run check` is the full gate: format + lint + typecheck + unit tests.
 
 Single test file / single test:
 
 ```sh
-pnpm vitest run test/cli.test.js
-pnpm vitest run -t 'parses a positional name'
+bunx vp test run test/cli.test.js
+bunx vp test run -t 'parses a positional name'
 ```
 
 The generation gate (see below) is opt-in and skipped by default:
 
 ```sh
-RUN_GENERATION_GATE=1 pnpm vitest run test/generation-gate.test.js
+RUN_GENERATION_GATE=1 bunx vp test run test/generation-gate.test.js
 ```
 
 Publish safety — the packager ships only `files: ["bin", "template"]`, so verify nothing was dropped:
@@ -66,7 +70,7 @@ Settled during a validation spike. The planning tree that recorded them has been
 
 Non-goals, deliberately: no backend/database/auth in the template, no monorepo, no per-MCP-server selection, no router/state alternatives, no auto-bumping of pins.
 
-Version pins are deliberate: exact versions, no `^` ranges except `@types/node`. Notably **TypeScript is pinned to 6.0.3, not 7** — `typescript-eslint@8` exits non-zero under TS 7, which would mean no linting at all, not merely degraded linting. **React bumps need `template/src/test/render.test.tsx` to pass** — react@19.2.8 changed `createRoot().render()` so the initial commit was no longer flushed synchronously, and under Vitest + `@testing-library/react` every component test rendered an empty container (no error, just missing elements); 19.3.1 with `@testing-library/react@16.3.3` renders correctly again. If that guard goes red after a React bump, hold React back. Bumping pins means re-running the generation gate.
+Version pins are deliberate: exact versions, no `^` ranges except `@types/node`. **Vite+ (`vite-plus`) is pinned to 1.7.0** — it bundles Vite 8, Vitest 5.1.0, Oxlint 1.94, Oxfmt 0.79 and tsrs (a Rust port of TypeScript 7), so one pin moves the whole generated toolchain. Type checking and type-aware linting run through tsrs, not `tsc`; `typescript` is not a template dependency. **React bumps need `template/src/test/render.test.tsx` to pass** — react@19.2.8 changed `createRoot().render()` so the initial commit was no longer flushed synchronously, and under Vitest + `@testing-library/react` every component test rendered an empty container (no error, just missing elements); 19.3.1 with `@testing-library/react@16.3.3` renders correctly again. If that guard goes red after a React bump, hold React back. Bumping pins means re-running the generation gate.
 
 ## How the CLI works (`bin/index.js`)
 
@@ -74,7 +78,7 @@ Zero runtime dependencies by design — hand-rolled arg parsing and `node:readli
 
 Three transformations happen during the copy, all in `copyDir`:
 
-1. **Dotfile restore.** npm mangles dotfiles on publish, so the template stores them underscore-prefixed and `DOTFILE_MAP` renames them back: `_gitignore` → `.gitignore`, `_npmrc` → `.npmrc`, `_nvmrc` → `.nvmrc`. Any new npm-mangled dotfile must be added there. (Other dotfiles — `.mcp.json`, `.dockerignore`, `.prettierignore` — survive publish and are stored as-is.)
+1. **Dotfile restore.** npm mangles dotfiles on publish, so the template stores them underscore-prefixed and `DOTFILE_MAP` renames them back: `_gitignore` → `.gitignore`, `_npmrc` → `.npmrc`, `_nvmrc` → `.nvmrc`. Any new npm-mangled dotfile must be added there. (Other dotfiles — `.mcp.json`, `.dockerignore` — survive publish and are stored as-is.)
 2. **Placeholder substitution.** `{{PROJECT_NAME}}` is the only placeholder, substituted in every copied file.
 3. **Skills wiring.** `template/skills/` ships as **real files** because symlinks don't survive npm publish. `skills/` is skipped in the main copy and only copied when skills are enabled; then `linkSkills` materializes a _relative_ `../skills` symlink into `.claude/` and/or `.agents/`, falling back symlink → Windows junction → plain copy, warning on the two fallbacks.
 
@@ -82,7 +86,7 @@ MCP (`template/.mcp.json`, four fixed servers) is always copied and never select
 
 `AGENTS.md` mirrors `CLAUDE.md` — also materialized after the copy, never stored as a symlink in the template. `linkAgents` writes a _relative_ `CLAUDE.md` symlink at the generated project root, falling back to a plain file copy on Windows, so every agent client (Claude Code, Cursor, …) reads the same instructions. It is always created, unconditionally.
 
-Interactive vs non-interactive is decided by `process.stdin.isTTY`. Non-interactive requires a positional name and always uses pnpm — that is what makes CI deterministic.
+Interactive vs non-interactive is decided by `process.stdin.isTTY`. Non-interactive requires a positional name. The CLI is **Bun-only**: it never prompts for a package manager, and the printed next steps are `bun install` / `bunx playwright install` / `bun run …` — that is what makes CI deterministic.
 
 ## Working on the template
 
@@ -91,29 +95,31 @@ Interactive vs non-interactive is decided by `process.stdin.isTTY`. Non-interact
 ```sh
 cd $(mktemp -d)
 node /path/to/create-frontstack/bin/index.js myapp --no-skills
-cd myapp && pnpm install && pnpm check
+cd myapp && bun install && bun run check
 ```
 
-**The generation gate is the real verification**: the generated project is the unit under test, because the packager's own lint/test prove nothing about the template. `test/generation-gate.test.js` scaffolds into a temp dir and runs `pnpm install` + `pnpm check` + `pnpm format:check` + `pnpm build` there. Run it after any template change.
+**The generation gate is the real verification**: the generated project is the unit under test, because the packager's own lint/test prove nothing about the template. `test/generation-gate.test.js` scaffolds into a temp dir and runs `bun install` + `bun run check` + `bun run format:check` + `bun run build` there. Run it after any template change.
 
-Note `pnpm check` in the generated project is `typecheck + lint + test` — it does **not** include `format:check`, so the gate runs `format:check` as a separate step.
+Note `bun run check` in the generated project is `vp check && vp test run`, so it **includes formatting** (`vp check` = format + lint + typecheck). The gate still runs `format:check` as a separate step for an explicit signal.
 
 ### Formatting template files
 
-`template/prettier.config.js` loads `prettier-plugin-tailwindcss`, and **Prettier resolves plugins relative to the CWD, not to the config file**. Formatting `template/` from the repo root fails with `Cannot find package 'prettier-plugin-tailwindcss'` — and with `--write` it fails _silently_, changing nothing. Run Prettier from inside a generated project that has the plugin installed, pointing at the template:
+All formatting config lives in the `fmt` block of `template/vite.config.ts` (Oxfmt, with `sortTailwindcss` pointed at `./src/index.css`). Run Oxfmt from inside a generated project, pointing at the template:
 
 ```sh
 cd /path/to/generated-app
-./node_modules/.bin/prettier --config ./prettier.config.js --write /path/to/create-frontstack/template
+./node_modules/.bin/vp fmt --config ./vite.config.ts /path/to/create-frontstack/template
 ```
 
-Without the plugin, Tailwind class ordering is left unsorted and `pnpm format:check` still fails in generated projects.
+This rewrites files in place (no `--write` flag needed) and prints the file count. Then regenerate and confirm `bun run format:check` passes unchanged. If the command reports zero files or changes nothing, check the generated project's `fmt.ignorePatterns` first.
 
-### Type-aware linting in the template
+### Type-aware linting and type checks in the template
 
-`template/eslint.config.js` applies type-aware rules only to files a tsconfig project actually covers — `src/**` (`tsconfig.app.json`) and `e2e/**` (`tsconfig.node.json`). Adding a new top-level TS directory means adding it to a tsconfig `include` _and_ to the eslint `files` list; the eslint change alone gives no type information. Root config files belong to no project and stay on the untyped baseline.
+One switch drives both. `template/vite.config.ts` sets `lint.options.typeAware: true` and `typeCheck: true`; tsrs (a Rust port of TypeScript 7) then gives Oxlint type information and adds full type checking to `vp check`. `bun run typecheck` is `vp check --no-fmt --no-lint` (type check only).
 
-`src/routeTree.gen.ts` is generated by the router plugin and must stay excluded from ESLint, Prettier, and coverage. `typecheck`/`build` prefix `tsr generate` so the file exists before `tsc` runs.
+Type coverage follows the TypeScript project structure: `tsconfig.json` references `tsconfig.app.json` (`src/**`) and `tsconfig.node.json` (`vite.config.ts`, `playwright.config.ts`, `e2e/**`). Adding a new top-level TS directory means adding it to a tsconfig `include`; there is no separate lint-file allowlist to update anymore. A deliberate type error in each of those areas must make `bun run typecheck` fail — QA checks this.
+
+`src/routeTree.gen.ts` is generated by the router plugin and must stay excluded from lint, format and coverage (`lint.ignorePatterns` / `fmt.ignorePatterns`). `typecheck`/`build` prefix `tsr generate` so the file exists before the type check runs. In tests and test setup, import Vitest APIs from `vite-plus/test`; `@testing-library/jest-dom/vitest` keeps augmenting the upstream `vitest` module, which is why `vitest` stays a direct devDependency.
 
 ## Agent skills in this repo
 
