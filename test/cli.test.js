@@ -48,6 +48,16 @@ describe('parseArgs', () => {
     expect(parseArgs(['a', '--skills=claude,agents']).skills).toBe('claude,agents');
     expect(parseArgs(['a', '--no-skills']).noSkills).toBe(true);
     expect(parseArgs(['--help']).help).toBe(true);
+    expect(parseArgs(['-h']).help).toBe(true);
+  });
+
+  it('keeps the first positional argument as projectName', () => {
+    expect(parseArgs(['first-app', 'second-app'])).toEqual({
+      projectName: 'first-app',
+      skills: null,
+      noSkills: false,
+      help: false,
+    });
   });
 
   it('rejects unknown flags', () => {
@@ -66,6 +76,13 @@ describe('normalizeProjectName', () => {
 
   it('rejects path separators', () => {
     expect(() => normalizeProjectName('a/b')).toThrow(/path separators/i);
+    expect(() => normalizeProjectName('a\\b')).toThrow(/path separators/i);
+    expect(() => normalizeProjectName('a\x00b')).toThrow(/path separators/i);
+  });
+
+  it('rejects dot and dot-dot as project names', () => {
+    expect(() => normalizeProjectName('.')).toThrow(/Invalid project name/);
+    expect(() => normalizeProjectName('..')).toThrow(/Invalid project name/);
   });
 });
 
@@ -81,6 +98,14 @@ describe('resolveSkills', () => {
     expect(resolveSkills({ noSkills: false, skills: 'claude,agents' })).toEqual({
       enabled: true,
       clients: ['claude', 'agents'],
+    });
+    expect(resolveSkills({ noSkills: false, skills: ' claude , agents ' })).toEqual({
+      enabled: true,
+      clients: ['claude', 'agents'],
+    });
+    expect(resolveSkills({ noSkills: false, skills: '' })).toEqual({
+      enabled: true,
+      clients: ['claude'],
     });
   });
 
@@ -300,6 +325,36 @@ describe('CLI process', () => {
     await expect(
       fs.access(path.join(tmpRoot, 'linked-app', 'package.json')),
     ).resolves.toBeUndefined();
+  });
+
+  it('prints help message on -h or --help', () => {
+    const out = execFileSync(process.execPath, [BIN, '--help'], { encoding: 'utf8' });
+    expect(out).toContain('Usage: create-frontstack <project-name>');
+    expect(out).toContain('--skills');
+    expect(out).toContain('--no-skills');
+
+    const shortOut = execFileSync(process.execPath, [BIN, '-h'], { encoding: 'utf8' });
+    expect(shortOut).toEqual(out);
+  });
+
+  it('fails with helpful error in non-interactive mode when project name is missing', () => {
+    expect(() => {
+      execFileSync(process.execPath, [BIN], { encoding: 'utf8', stdio: 'pipe' });
+    }).toThrow(/Project name is required in non-interactive mode/);
+  });
+
+  it('fails when target directory is not empty', async () => {
+    const targetDir = path.join(tmpRoot, 'occupied');
+    await fs.mkdir(targetDir, { recursive: true });
+    await fs.writeFile(path.join(targetDir, 'existing.txt'), 'content');
+
+    expect(() => {
+      execFileSync(process.execPath, [BIN, 'occupied', '--no-skills'], {
+        cwd: tmpRoot,
+        encoding: 'utf8',
+        stdio: 'pipe',
+      });
+    }).toThrow(/not empty/);
   });
 });
 
