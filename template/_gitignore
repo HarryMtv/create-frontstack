@@ -23,6 +23,7 @@ coverage
 playwright-report
 playwright/.cache
 test-results
+.vitest/
 
 # Editor / OS
 .vscode/*

@@ -100,7 +100,7 @@ cd myapp && bun install && bun run check
 
 **The generation gate is the real verification**: the generated project is the unit under test, because the packager's own lint/test prove nothing about the template. `test/generation-gate.test.js` scaffolds into a temp dir and runs `bun install` + `bun run check` + `bun run format:check` + `bun run build` there. Run it after any template change.
 
-Note `bun run check` in the generated project is `vp check && vp test run`, so it **includes formatting** (`vp check` = format + lint + typecheck). The gate still runs `format:check` as a separate step for an explicit signal.
+Note `bun run check` in the generated project is `tsr generate && vp check && vp test run`, so it **includes formatting** (`vp check` = format + lint + typecheck). The gate still runs `format:check` as a separate step for an explicit signal.
 
 ### Formatting template files
 
