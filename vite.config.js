@@ -95,7 +95,6 @@ export default defineConfig({
     singleQuote: true,
     trailingComma: 'all',
     printWidth: 100,
-    sortPackageJson: false,
     ignorePatterns: ['template/**', 'skills/**', 'bun.lock', 'node_modules/**'],
   },
 });

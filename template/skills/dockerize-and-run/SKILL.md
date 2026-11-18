@@ -29,5 +29,5 @@ nginx serves `dist/`, sends deep links to `index.html` (SPA fallback), and cache
 - `bun.lock` must be committed (production build uses `bun install --frozen-lockfile`). Run `bun install` once after scaffolding so the lockfile exists.
 - Run `bun install` and `bun run build` locally first; this catches type/lint failures before the slower image build.
 - The Dockerfiles install `libstdc++` — Vite+ native binaries (oxlint/oxfmt/tsrs) need it on Alpine (musl).
-- `vp` runs on Node, so the images start from `node:26-alpine` and only copy the Bun binary; Node ≥ 22.18 is still required.
+- `vp` runs on Node, so the images start from `node:26-alpine` and only copy the Bun binary; Node ≥ 26 (current LTS) is still required.
 - E2E (Playwright) and its browsers are **not** in the production image — run those locally or in CI.
