@@ -1,23 +1,23 @@
 # syntax=docker/dockerfile:1
 
-# ---- Base: Node 26 + pnpm via corepack ----
+# ---- Base: Node 26 + Bun (vp runs on Node; Bun is the package manager) ----
 FROM node:26-alpine AS base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN npm install -g corepack@0.36.0 && corepack enable
+# Vite+ native binaries (oxlint/oxfmt/tsrs) are linked against libstdc++ on musl.
+RUN apk add --no-cache libstdc++
+COPY --from=oven/bun:1.3.14-alpine /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /app
 
 # ---- Install dependencies (cacheable layer) ----
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN --mount=type=cache,id=bun,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 # ---- Build ----
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm build
+RUN bun run build
 
 # ---- Runtime: static files served by nginx ----
 FROM nginx:1.30-alpine AS runtime

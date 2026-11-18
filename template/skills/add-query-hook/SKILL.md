@@ -52,7 +52,7 @@ Server-state lives in **TanStack Query** — never mirror it into Zustand. Put f
      });
    }
    ```
-4. Run `pnpm typecheck && pnpm test`.
+4. Run `bun run typecheck && bun run test`.
 
 ## Conventions
 

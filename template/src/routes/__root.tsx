@@ -7,7 +7,7 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   return (
-    <div className="bg-background text-foreground min-h-screen">
+    <div className="min-h-screen bg-background text-foreground">
       <header className="border-b">
         <nav className="mx-auto flex max-w-3xl items-center gap-6 p-4">
           <Link to="/" activeProps={{ className: 'font-bold' }} className="text-sm">

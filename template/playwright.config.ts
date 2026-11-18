@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * E2E config — separate layer from Vitest (src/**). `pnpm test` runs only unit
- * tests; `pnpm test:e2e` runs these. Browsers: `npx playwright install`.
+ * E2E config — separate layer from Vitest (src/**). `bun run test` runs only
+ * unit tests; `bun run test:e2e` runs these. Browsers: `bunx playwright install`.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -21,7 +21,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: 'bun run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },

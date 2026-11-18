@@ -11,9 +11,9 @@ This project uses **shadcn/ui v4 on Tailwind v4** (CSS-first, no `tailwind.confi
 
 1. Add the component:
    ```sh
-   pnpm ui:add <component>     # e.g. pnpm ui:add dialog
+   bun run ui:add <component>     # e.g. bun run ui:add dialog
    ```
-   `ui:add` is an alias for `shadcn add`, configured by `components.json`.
+   `ui:add` is an alias for `shadcn add`, configured by `components.json`. Without the script you can run `bunx shadcn@4.22.1 add <component>`.
 2. Verify the generated file imports from `@/lib/utils` and `@/components/ui/...` aliases (it should by default).
 3. If you need a block (e.g. a login form) instead of a single component, use the shadcn MCP server (`.mcp.json`) to browse the registry.
 4. Import and use it:
@@ -24,5 +24,5 @@ This project uses **shadcn/ui v4 on Tailwind v4** (CSS-first, no `tailwind.confi
 ## Conventions
 
 - Do not edit `src/index.css` tokens unless adding a new theme variable.
-- `react-refresh/only-export-components` is disabled for `src/components/ui/**`, so variant exports are fine.
-- After adding, run `pnpm lint` and `pnpm typecheck` to confirm the new file passes.
+- `react/only-export-components` is disabled for `src/components/ui/**`, so variant exports are fine.
+- After adding, run `bun run lint` and `bun run typecheck` to confirm the new file passes.

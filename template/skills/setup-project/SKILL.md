@@ -9,13 +9,14 @@ Use right after `create-frontstack` generates this repo, before any feature work
 
 ## Steps
 
-1. Confirm the Node version matches `.nvmrc` (26). pnpm is enabled via corepack:
+1. Confirm the Node version matches `.nvmrc` (26) and Bun 1.3.14 is installed:
    ```sh
-   corepack enable
+   node --version
+   bun --version
    ```
-2. Install dependencies (this also generates `pnpm-lock.yaml`):
+2. Install dependencies (this also generates `bun.lock`):
    ```sh
-   pnpm install
+   bun install
    ```
 3. Initialize git (if not already) and commit the lockfile:
    ```sh
@@ -25,12 +26,12 @@ Use right after `create-frontstack` generates this repo, before any feature work
    ```
 4. Install Playwright browsers for E2E + the playwright/chrome-devtools MCP:
    ```sh
-   npx playwright install
+   bunx playwright install
    ```
 5. Run the quality gate and fix anything red before starting:
    ```sh
-   pnpm check
-   pnpm build
+   bun run check
+   bun run build
    ```
 
-`pnpm-lock.yaml` MUST be committed — the Docker build uses `--frozen-lockfile`.
+`bun.lock` MUST be committed — the Docker build uses `--frozen-lockfile`.

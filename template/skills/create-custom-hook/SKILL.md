@@ -28,7 +28,7 @@ description: Scaffold a typed custom React hook with a colocated Vitest test, us
    ```
 2. Export the return type if callers need it: `export type …`.
 3. Add a colocated test `use-<name>.test.ts` (see `write-vitest-test`).
-4. Run `pnpm typecheck && pnpm test`.
+4. Run `bun run typecheck && bun run test`.
 
 ## Conventions
 

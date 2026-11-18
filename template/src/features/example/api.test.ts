@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test';
 import { fetchExamplePost, exampleKeys, examplePostQuery } from './api';
 
 const POST_URL = 'https://jsonplaceholder.typicode.com/posts/1';
